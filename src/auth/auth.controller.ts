@@ -1,8 +1,17 @@
-import { Body, Controller, Patch, Post, Query } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  NotFoundException,
+  Patch,
+  Post,
+  Query,
+} from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
 import { requireEmailDto } from './dto/requireEmail.dto';
 import { SignupDto } from './dto/signup.dto';
+import { PasswordDto } from './dto/password.dto';
+import { TokenDto } from './dto/token.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -18,7 +27,10 @@ export class AuthController {
   }
 
   @Patch('verify-email')
-  handleVerifyEmail(@Query('token') token: string) {
+  handleVerifyEmail(@Query('token') token: TokenDto) {
+    if (!token) {
+      throw new NotFoundException('Token not found');
+    }
     return this.authService.verifyEmail(token);
   }
 
@@ -33,10 +45,11 @@ export class AuthController {
   }
 
   @Post('reset-password')
-  handleResetPassword(
-    @Body('password') password: string,
-    @Query('token') token: string,
-  ) {
+  handleResetPassword(@Body() password: PasswordDto, @Query() token: TokenDto) {
+    if (!token) {
+      throw new NotFoundException('Token not found');
+    }
+
     return this.authService.resetPassword(token, password);
   }
 }

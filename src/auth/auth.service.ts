@@ -13,6 +13,9 @@ import { User } from './schemas/user.schema';
 import { JwtService } from '@nestjs/jwt';
 import { MailerService } from '@nestjs-modules/mailer';
 import { requireEmailDto } from './dto/requireEmail.dto';
+import { verifyJwt } from 'src/utils/verifyJwt';
+import { PasswordDto } from './dto/password.dto';
+import { TokenDto } from './dto/token.dto';
 
 @Injectable()
 export class AuthService {
@@ -68,8 +71,8 @@ export class AuthService {
     return { success: true, message: 'User loggedIn successfully', token };
   }
 
-  async verifyEmail(token: string) {
-    const decoded = await this.jwtService.verifyAsync(token);
+  async verifyEmail(tokenDto: TokenDto) {
+    const decoded = await verifyJwt(this.jwtService, tokenDto.token);
     if (!decoded) {
       throw new UnauthorizedException('Token is not valid or expired');
     }
@@ -100,7 +103,10 @@ export class AuthService {
     });
     return { success: true, message: 'Verification email sent successfully' };
   }
-
+  // this is the comment
+  // * this is the comment
+  // ? this is the comment
+  // ! this is the comment
   async forgetPasswordEmail({ email }: requireEmailDto) {
     const user = await this.userModel.findOne({ email });
     if (!user) {
@@ -116,7 +122,7 @@ export class AuthService {
     await this.mailService.sendMail({
       to: user.email,
       from: 'the@gmail.com',
-      subject: 'Mail for Email Verification from The..',
+      subject: 'Email for Forget Password from The..',
       html: `<h1>This is the email for forget password, <br> please keep your password safe - </h1> <br> <p>${verificationToken}</p>`,
     });
     return {
@@ -125,8 +131,9 @@ export class AuthService {
     };
   }
 
-  async resetPassword(token: string, password: string) {
-    const decoded = await this.jwtService.verifyAsync(token);
+  async resetPassword(tokenDto: TokenDto, passwordDto: PasswordDto) {
+    const decoded = await verifyJwt(this.jwtService, tokenDto.token);
+
     if (!decoded) {
       throw new UnauthorizedException('Token is not valid or expired');
     }
@@ -134,7 +141,8 @@ export class AuthService {
     if (!user) {
       throw new NotFoundException('User not found');
     }
-    const hashPass = await bcrypt.hash(password, 10);
+
+    const hashPass = await bcrypt.hash(passwordDto.password, 10);
     user.password = hashPass;
     user.save();
     return {
